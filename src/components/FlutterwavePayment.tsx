@@ -106,7 +106,7 @@ const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
   useEffect(() => {
     const fetchBalance = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:3001/api/dashboard', {
+      const res = await axios.get('http://localhost:10000/api/dashboard', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUserBalance(res.data.user?.balance || 0);
@@ -141,7 +141,7 @@ const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
       token: !!token // Log si token existe
     });
       const response = await axios.post(
-        `http://localhost:3001/api/investment-packs/${packId}/invest`,
+        `http://localhost:10000/api/investment-packs/${packId}/invest`,
         { amount: investmentAmount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -371,7 +371,7 @@ const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
               <div className="flex justify-between">
                 <span className="text-gray-600">Gains quotidiens:</span>
                 <span className="font-bold text-green-600">
-                  +{formatCurrency(investmentAmount * (interestRate / 100))}/jour
+                  +{formatCurrency(expectedReturn / 40)}/jour
                 </span>
               </div>
               <div className="flex justify-between">

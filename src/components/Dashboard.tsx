@@ -36,6 +36,7 @@ import MiniStarter from '../images/MiniStarter.jpg';
   id: number;
   pack_name: string;
   amount: number;
+  expected_return: number;
   interest_rate: number;
   end_date?: string;
   endDate?: Date | null;
@@ -46,22 +47,22 @@ import MiniStarter from '../images/MiniStarter.jpg';
   duration_days: number;
   progress: number;
   return_percentage_40_days: number;
-  available_earnings?: number;
-  daily_return?: number; // Ajouté pour correspondre à votre usage
+  available_earnings: number;
+  daily_return?: number;
 }
 
 const Dashboard: React.FC = () => {
   const [showBalance, setShowBalance] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   // Données utilisateur simulées
   const [userData, setUserData] = useState({
     name: 'Chargement...',
     email: '',
     balance: 0,
     totalInvested: 0,
+    availableEarnings: 0,
     totalEarnings: 0,
     activeInvestments: 0,
     referralEarnings: 0,
@@ -69,99 +70,110 @@ const Dashboard: React.FC = () => {
   });
 
   // Investissements actifs
-  const [activeInvestments, setActiveInvestments] = useState<Investment[]>([]);
+ const [activeInvestments, setActiveInvestments] = useState<Investment[]>([]);
 
   // Historique des transactions
   const [transactions, setTransactions] = useState([]);
-  const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   const [showInvestmentDetails, setShowInvestmentDetails] = useState(false);
 
-  
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3001/api/dashboard', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        // Transformez les investissements actifs
-        const transformedInvestments = response.data.activeInvestments?.map(investment => {
-          const endDate = investment.end_date ? new Date(investment.end_date) : null;
-          const durationDays = investment.duration_days || 30;
-          const daysRemaining = endDate ? Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : durationDays;
-
-          // Assurez-vous que les valeurs numériques sont bien converties
-          const amount = Number(investment.amount) || 0;
-          const interestRate = Number(investment.interest_rate) || 0;
-          const dailyReturn = amount * (interestRate / 100);
-          const totalReturn = amount + (dailyReturn * durationDays);
-        
-          return {
-            ...investment,
-            amount, // Conversion explicite
-            interest_rate: interestRate, // Conversion explicite
-            endDate,
-            formattedEndDate: endDate?.toLocaleDateString('fr-FR') || 'Date inconnue',
-            dailyReturn,
-            totalReturn,
-            daysRemaining,
-            duration_days: durationDays,
-            progress: Math.round(((durationDays - daysRemaining) / durationDays) * 100)
-          };
-        }) || [];
-
-        setUserData({
-          name: response.data.user?.full_name || 'Utilisateur',
-          email: response.data.user?.email || '',
-          balance: Number(response.data.user?.balance) || 0,
-          totalInvested: transformedInvestments.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0), // Calcul basé sur les investissements actifs
-          totalEarnings: Number(response.data.user?.total_earnings) || 0,
-          activeInvestments: transformedInvestments.length,
-          referralEarnings: Number(response.data.user?.referral_earnings) || 0,
-          level: response.data.user?.level || 'Bronze'
-        });
-
-
-        setActiveInvestments(transformedInvestments);
-        setTransactions(response.data.transactions || []);
-
-      } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
-        if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:10000/api/dashboard', {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      } finally {
-        setIsLoading(false);
+      });
+
+      // Transformez les investissements actifs
+      const transformedInvestments = response.data.activeInvestments?.map(investment => {
+        const endDate = investment.end_date ? new Date(investment.end_date) : null;
+        const startDate = investment.start_date ? new Date(investment.start_date) : null;
+        let progressPercent = 0;
+        const durationDays = investment.duration_days || 30;
+        const daysRemaining = endDate ? Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : durationDays;
+
+        // Assurez-vous que les valeurs numériques sont bien converties
+        const amount = Number(investment.amount) || 0;
+        const interestRate = Number(investment.interest_rate) || 0;
+        const dailyReturn = amount * (interestRate / 100);
+        const totalReturn = amount + (dailyReturn * durationDays);
+
+        if (startDate && endDate) {
+          const totalDuration = endDate.getTime() - startDate.getTime();
+          const elapsed = Date.now() - startDate.getTime();
+
+         progressPercent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+         }
+        
+        return {
+          ...investment,
+          amount, // Conversion explicite
+          interest_rate: interestRate, // Conversion explicite
+          endDate,
+          formattedEndDate: endDate?.toLocaleDateString('fr-FR') || 'Date inconnue',
+          dailyReturn,
+          totalReturn,
+          daysRemaining,
+          duration_days: durationDays,
+          progress: Math.round(progressPercent)
+        };
+      }) || [];
+
+      setUserData({
+        ...userData,
+        name: response.data.user?.full_name || 'Utilisateur',
+        email: response.data.user?.email || '',
+        balance: Number(response.data.user?.balance ?? 0),
+        totalInvested: transformedInvestments.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0),
+        totalEarnings: parseFloat(response.data.user?.totalEarnings ?? 0),
+        activeInvestments: transformedInvestments.length,
+        referralEarnings: Number(response.data.user?.referral_earnings ?? 0),
+        level: response.data.user?.level || 'Bronze'
+      });
+
+
+      setActiveInvestments(transformedInvestments);
+      setTransactions(response.data.transactions || []);
+
+    } catch (error) {
+      console.error('Erreur lors du chargement des données:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchDashboardData();
-  }, []);
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3001/api/notifications', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      
-        setNotifications(response.data);
-        setUnreadCount(response.data.filter(n => !n.isRead).length);
-      } catch (err) {
-        console.error('Erreur lors de la récupération des notifications:', err);
-      }
-    };
+useEffect(() => {
+  fetchDashboardData();
+}, []);
+useEffect(() => {
+  const ids = activeInvestments.map(inv => inv.id);
+  const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
+  if (duplicates.length > 0) {
+    console.warn("❗ Clés dupliquées détectées :", duplicates);
+  }
+}, [activeInvestments]);
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:10000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(response.data.notifications || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des notifications :", error);
+    }
+  };
 
-    fetchNotifications();
-  }, []);
-
-
+  fetchNotifications();
+}, []);
 
   // Modifiez la fonction formatCurrency pour gérer les nombres
   const formatCurrency = (amount: number) => {
@@ -173,7 +185,6 @@ const Dashboard: React.FC = () => {
   };
 
   // Notifications
-  
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -188,6 +199,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -324,7 +336,7 @@ const Dashboard: React.FC = () => {
 
               <div className="space-y-6">
                 {activeInvestments.map((investment) => (
-                 <div key={investment.id} className="border border-gray-200 rounded-lg p-6">
+                 <div key={`${investment.id}`} className="border border-gray-200 rounded-lg p-6">
                    <div className="flex items-center justify-between mb-4">
                      <div>
                        <h3 className="text-lg font-semibold text-gray-900">{investment.pack_name}</h3>
@@ -334,7 +346,7 @@ const Dashboard: React.FC = () => {
                      </div>
                      <div className="text-right">
                        <p className="text-lg font-bold text-green-600">
-                         +{formatCurrency(investment.amount * investment.interest_rate)}/jour
+                         +{formatCurrency(investment.expected_return / 40)}/jour
                        </p>
                        <p className="text-sm text-gray-600">
                          {investment.daysRemaining} jours restants
@@ -365,7 +377,7 @@ const Dashboard: React.FC = () => {
                       <div>
                         <span className="text-gray-600">Total attendu :</span>
                         <span className="font-bold text-green-600 ml-2">
-                          {formatCurrency(investment.totalReturn)}
+                          {formatCurrency(investment.expected_return)}
                         </span>
                       </div>
                     </div>
@@ -381,7 +393,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 ))}
 
-                {activeInvestments.length === 0 && (
+                {showInvestmentDetails && selectedInvestment && (
                   <div className="text-center py-12">
                     <PieChart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun investissement actif</h3>
@@ -481,25 +493,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Gains du jour */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Gains d'Aujourd'hui</h3>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pack Croissance:</span>
-                  <span className="font-bold text-green-600">+625 FCFA</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Starter:</span>
-                  <span className="font-bold text-green-600">+1 250 FCFA</span>
-                </div>
-                <div className="flex justify-between border-t pt-3">
-                  <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-green-600 text-lg">+1 875 FCFA</span>
-                </div>
-              </div>
-            </div>
+           
 
             {/* Prochains paiements */}
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -527,42 +521,95 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Popup Notifications */}
-      {notifications.map((notification) => (
-  <div 
-    key={notification.id} 
-    className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
-      !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-    }`}
-  >
-    <div className="flex items-start space-x-3">
-      <div className="flex-shrink-0 mt-1">
-        {getNotificationIcon(notification.type || 'info')}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className={`text-sm font-medium ${
-            !notification.isRead ? 'text-gray-900' : 'text-gray-700'
-          }`}>
-            {notification.title}
-          </h3>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">
-              {notification.time}
-            </span>
-            {!notification.isRead && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+      {showNotifications && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Bell className="w-6 h-6" />
+                <h2 className="text-lg font-bold">Notifications</h2>
+                {unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowNotifications(false)}
+                className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-300"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Notifications List */}
+            <div className="max-h-96 overflow-y-auto">
+              {notifications.length > 0 ? (
+                <div className="divide-y divide-gray-200">
+                  {notifications.map((notification) => (
+                    <div 
+                      key={notification.id} 
+                      className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
+                        !notification.read ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 mt-1">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className={`text-sm font-medium ${
+                              !notification.read ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {notification.title}
+                            </h3>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500 flex items-center">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {notification.time}
+                              </span>
+                              {!notification.isRead && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              )}
+                            </div>
+                          </div>
+                          <p className={`text-sm ${
+                            !notification.read ? 'text-gray-700' : 'text-gray-600'
+                          }`}>
+                            {notification.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune notification</h3>
+                  <p className="text-gray-600">Vous êtes à jour !</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {notifications.length > 0 && (
+              <div className="bg-gray-50 p-4 border-t">
+                <div className="flex items-center justify-between">
+                  <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    Marquer tout comme lu
+                  </button>
+                  <button className="text-sm text-gray-600 hover:text-gray-700">
+                    Effacer tout
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
-        <p className={`text-sm ${
-          !notification.isRead ? 'text-gray-700' : 'text-gray-600'
-        }`}>
-          {notification.message}
-        </p>
-      </div>
-    </div>
-  </div>
-))}
+      )}
 
       {/* Popup Détails Investissement */}
 {showInvestmentDetails && selectedInvestment && (
@@ -598,7 +645,7 @@ const Dashboard: React.FC = () => {
           
           <div className="flex justify-between">
             <span className="text-gray-600">Gains quotidiens:</span>
-            <span className="font-bold text-green-600">+{formatCurrency(selectedInvestment.daily_return)}</span>
+            <span className="font-bold text-green-600">+{formatCurrency(selectedInvestment.expected_return / 40)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Jours restants:</span>
@@ -613,7 +660,7 @@ const Dashboard: React.FC = () => {
       </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Total attendu:</span>
-            <span className="font-bold text-green-600">{formatCurrency(selectedInvestment.totalReturn)}</span>
+            <span className="font-bold text-green-600">{formatCurrency(selectedInvestment.expected_return)}</span>
           </div>
         </div>
 
@@ -808,39 +855,45 @@ const Dashboard: React.FC = () => {
         <div className="bg-blue-50 p-4 rounded-lg mb-6">
           <h4 className="font-medium text-blue-800 mb-2">Gains disponibles</h4>
           <p className="text-2xl font-bold text-blue-600 mb-2">
-            +{formatCurrency(selectedInvestment.available_earnings)}
-          </p>
+      +{showBalance ? formatCurrency(selectedInvestment.available_earnings) : '••••••'}
+    </p>
           <p className="text-sm text-blue-700">
             Ces gains peuvent être transférés sur votre solde principal
           </p>
         </div>
 
-        <button
-          onClick={async () => {
-            try {
-              const token = localStorage.getItem('token');
-              await axios.post('http://localhost:3001/api/claim-earnings', {
-                investmentId: selectedInvestment.id
-              }, {
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
-              });
-              
-              // Rafraîchir les données
-              fetchDashboardData();
-              setShowInvestmentDetails(false);
-              alert('Gains transférés avec succès !');
-            } catch (error) {
-              console.error('Erreur:', error);
-              alert('Une erreur est survenue lors du transfert des gains');
-            }
-          }}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-300 flex items-center justify-center space-x-2"
-        >
-          <DollarSign className="w-5 h-5" />
-          <span>Récupérer mes gains</span>
-        </button>
+       <button
+  onClick={async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post('http://localhost:10000/api/earnings/claim', {
+        investmentId: selectedInvestment.id
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.data.success) {
+        await fetchDashboardData(); // Rafraîchir les données
+        setShowInvestmentDetails(false);
+        alert(`Gains transférés avec succès ! (${formatCurrency(response.data.amount)})`);
+      } else {
+        alert(response.data.error || 'Une erreur est survenue');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      const errorMessage = error.response?.data?.error 
+        || error.message 
+        || 'Une erreur est survenue lors du transfert des gains';
+      alert(errorMessage);
+    }
+  }}
+  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-300 flex items-center justify-center space-x-2"
+>
+  <DollarSign className="w-5 h-5" />
+  <span>Récupérer mes gains</span>
+</button>
       </div>
     </div>
   </div>

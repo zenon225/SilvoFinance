@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -22,6 +22,7 @@ import {
   FileText,
   Send
 } from 'lucide-react';
+import axios from 'axios';
 import FlutterwavePayment from './FlutterwavePayment';
 
 const DepositWithdrawal: React.FC = () => {
@@ -38,6 +39,7 @@ const DepositWithdrawal: React.FC = () => {
     bankName: '',
     reason: ''
   });
+  
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -227,11 +229,26 @@ const DepositWithdrawal: React.FC = () => {
   const selectedMethodData = paymentMethods[activeTab].find(method => method.id === selectedMethod);
 
   // Données utilisateur simulées
-  const userBalance = {
-    available: 2847500,
-    pending: 125000,
-    invested: 850000
-  };
+  const [userBalance, setUserBalance] = useState({
+    available: 0,    // Solde disponible
+    pending: 0,      // Transactions en attente
+    invested: 0      // Montant investi
+  });
+  useEffect(() => {
+    const fetchUserBalance = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:10000/api/dashboard', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUserBalance(response.data);
+      } catch (error) {
+        console.error("Erreur lors du chargement du solde:", error);
+      }
+    };
+
+    fetchUserBalance();
+  }, []);
 
   // Données utilisateur pour Flutterwave
   const userData = {
@@ -259,7 +276,7 @@ const DepositWithdrawal: React.FC = () => {
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-2">Dépôts & Retraits</h1>
-              <p className="text-xl text-white/90">Gérez vos transactions en toute sécurité avec Flutterwave</p>
+              <p className="text-xl text-white/90">Gérez vos transactions en toute sécurité</p>
             </div>
           </div>
 

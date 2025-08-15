@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Users, 
@@ -22,10 +22,144 @@ import {
   Crown,
   Star
 } from 'lucide-react';
+import axios from 'axios';
+
+const getLevelIconComponent = (levelName: string) => {
+  switch(levelName) {
+    case 'Bronze': return Award;
+    case 'Argent': return Star;
+    case 'Or': return Crown;
+    case 'Platine': return Crown;
+    default: return Award;
+  }
+};
+
+const getLevelIcon = (levelName: string) => {
+  switch(levelName) {
+    case 'Bronze': return Award;
+    case 'Argent': return Star;
+    case 'Or': return Crown;
+    case 'Platine': return Crown;
+    default: return Award;
+  }
+};
+
+interface ReferralLevel {
+  level: string;
+  minReferrals: number;
+  maxReferrals: number | null; // ou number | 'Infinity' selon votre besoin
+  commission: number;
+  bonus: number;
+  color: string;
+  benefits: string[];
+  // Si vous utilisez des icônes côté frontend uniquement
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+interface ReferralUser {
+  name: string;
+  referralCode: string;
+  totalReferrals: number;
+  activeReferrals: number;
+  totalCommissions: number;
+  pendingCommissions: number;
+  thisMonthCommissions: number;
+}
+
+interface ReferralHistoryItem {
+  id: number;
+  name: string;
+  joinDate: string;
+  pack: string;
+  investment: number;
+  commission: number;
+  status: 'active' | 'completed' | 'pending';
+}
+
+interface ReferralData {
+  user: ReferralUser;
+  referralHistory: ReferralHistoryItem[];
+  referralLevels: ReferralLevel[];
+  currentLevel: ReferralLevel;
+  nextLevel: ReferralLevel | null;
+}
 
 const ReferralSystem: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [selectedShareMethod, setSelectedShareMethod] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+
+  // Données utilisateur simulées
+  //const userData = {
+   // name: 'Aminata Traoré',
+    //referralCode: 'AMI2024TRA',
+    //totalReferrals: 12,
+    //activeReferrals: 8,
+    //totalCommissions: 485000,
+    //pendingCommissions: 75000,
+    //thisMonthCommissions: 125000
+  //};
+ const [data, setData] = useState<ReferralData>({
+  user: {
+    name: '',
+    referralCode: '',
+    totalReferrals: 0,
+    activeReferrals: 0,
+    totalCommissions: 0,
+    pendingCommissions: 0,
+    thisMonthCommissions: 0
+  },
+  referralHistory: [],
+  referralLevels: [],
+  currentLevel: {
+    level: 'Bronze',
+    minReferrals: 0,
+    maxReferrals: 0,
+    commission: 0,
+    bonus: 0,
+    color: '',
+    benefits: []
+  },
+  nextLevel: null
+});
+
+  useEffect(() => {
+    const fetchReferralData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('http://localhost:10000/api/referral', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        const currentLevel = response.data.currentLevel;
+        const nextLevel = response.data.referralLevels.find(level => 
+          response.data.user.totalReferrals < level.minReferrals
+        ) || null;
+
+        setData({
+          user: {
+            ...response.data.user,
+            pendingCommissions: 0 // Vous devrez peut-être ajouter ce champ dans votre API
+          },
+          referralHistory: response.data.referralHistory,
+          referralLevels: response.data.referralLevels,
+          currentLevel,
+          nextLevel
+        });
+      } catch (err) {
+        setError('Erreur lors du chargement des données de parrainage');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReferralData();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -33,17 +167,6 @@ const ReferralSystem: React.FC = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount) + ' XOF';
-  };
-
-  // Données utilisateur simulées
-  const userData = {
-    name: 'Aminata Traoré',
-    referralCode: 'AMI2024TRA',
-    totalReferrals: 12,
-    activeReferrals: 8,
-    totalCommissions: 485000,
-    pendingCommissions: 75000,
-    thisMonthCommissions: 125000
   };
 
   // Historique des parrainages
@@ -105,7 +228,7 @@ const ReferralSystem: React.FC = () => {
       commission: 10,
       bonus: 0,
       color: 'from-orange-500 to-orange-600',
-      benefits: ['10% de commission', 'Support prioritaire']
+      benefits: ['10% de commission sur le premier investissement']
     },
     {
       level: 'Argent',
@@ -115,7 +238,7 @@ const ReferralSystem: React.FC = () => {
       commission: 12,
       bonus: 50000,
       color: 'from-gray-400 to-gray-600',
-      benefits: ['12% de commission', 'Bonus 50K XOF', 'Webinaires exclusifs']
+      benefits: ['12% de commission sur le premier investissement']
     },
     {
       level: 'Or',
@@ -125,7 +248,7 @@ const ReferralSystem: React.FC = () => {
       commission: 15,
       bonus: 150000,
       color: 'from-yellow-500 to-yellow-600',
-      benefits: ['15% de commission', 'Bonus 150K XOF', 'Conseiller dédié']
+      benefits: ['15% de commission sur le premier investissement']
     },
     {
       level: 'Platine',
@@ -135,33 +258,49 @@ const ReferralSystem: React.FC = () => {
       commission: 20,
       bonus: 500000,
       color: 'from-purple-500 to-purple-600',
-      benefits: ['20% de commission', 'Bonus 500K XOF', 'Événements VIP', 'Formation exclusive']
+      benefits: ['20% de commission sur le premier investissement']
     }
   ];
 
-  const getCurrentLevel = () => {
-    return referralLevels.find(level => 
-      userData.totalReferrals >= level.minReferrals && 
-      userData.totalReferrals <= level.maxReferrals
-    ) || referralLevels[0];
-  };
+  const getCurrentLevel = (): ReferralLevel => {
+  if (!data.referralLevels.length) {
+    return {
+      level: 'Bronze',
+      minReferrals: 0,
+      maxReferrals: 0,
+      commission: 0,
+      bonus: 0,
+      color: 'from-gray-500 to-gray-600',
+      benefits: []
+    };
+  }
+  const level = data.referralLevels.find(level => 
+    data.user.totalReferrals >= level.minReferrals && 
+    (level.maxReferrals === null || data.user.totalReferrals <= level.maxReferrals)
+  );
+  
+  return level || data.referralLevels[0];
+};
 
-  const getNextLevel = () => {
-    const currentLevel = getCurrentLevel();
-    const currentIndex = referralLevels.indexOf(currentLevel);
-    return currentIndex < referralLevels.length - 1 ? referralLevels[currentIndex + 1] : null;
-  };
+
+  const getNextLevel = (): ReferralLevel | null => {
+  const currentLevel = getCurrentLevel();
+  const currentIndex = data.referralLevels.findIndex(l => l.level === currentLevel.level);
+  return currentIndex < data.referralLevels.length - 1 
+    ? data.referralLevels[currentIndex + 1] 
+    : null;
+};
 
   const copyReferralCode = () => {
-    const referralLink = `https://silvo-finance.com/register?ref=${userData.referralCode}`;
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
+  const referralLink = `http://localhost:4000/register?ref=${data.user.referralCode}`;
+  navigator.clipboard.writeText(referralLink);
+  setCopied(true);
+  setTimeout(() => setCopied(false), 3000);
+};
 
   const shareViaMethod = (method: string) => {
-    const referralLink = `https://silvo-finance.com/register?ref=${userData.referralCode}`;
-    const message = `🚀 Rejoins-moi sur Silvo Finance ! Rendements de 150% à 750% garantis. Utilise mon code: ${userData.referralCode} ${referralLink}`;
+   const referralLink = `http://localhost:4000/register?ref=${data.user.referralCode}`;
+   const message = `🚀 Rejoins-moi sur Silvo Finance ! Rendements de 150% à 750% garantis. Utilise mon code: ${data.user.referralCode} ${referralLink}`;
     
     switch (method) {
       case 'whatsapp':
@@ -182,8 +321,15 @@ const ReferralSystem: React.FC = () => {
     }
   };
 
-  const currentLevel = getCurrentLevel();
-  const nextLevel = getNextLevel();
+  const currentLevel = data.user ? getCurrentLevel() : referralLevels[0];
+  const nextLevel = data.user ? getNextLevel() : null;
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,7 +350,7 @@ const ReferralSystem: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2">Programme de Parrainage</h1>
-              <p className="text-base md:text-xl text-white/90">Gagnez 10% sur chaque investissement de vos filleuls</p>
+              <p className="text-base md:text-xl text-white/90">Gagnez plus de 8 % sur les premiers investissements de vos filleuls</p>
             </div>
           </div>
 
@@ -212,19 +358,15 @@ const ReferralSystem: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4">
               <div className="text-xs md:text-sm text-white/80 mb-1">Total Parrainés</div>
-              <div className="text-lg md:text-2xl font-bold">{userData.totalReferrals}</div>
+              <div className="text-lg md:text-2xl font-bold">{data.user.totalReferrals}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4">
               <div className="text-xs md:text-sm text-white/80 mb-1">Actifs</div>
-              <div className="text-lg md:text-2xl font-bold">{userData.activeReferrals}</div>
+              <div className="text-lg md:text-2xl font-bold">{data.user.activeReferrals}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 col-span-2 md:col-span-1">
               <div className="text-xs md:text-sm text-white/80 mb-1">Commissions Totales</div>
-              <div className="text-sm md:text-xl lg:text-2xl font-bold break-words">{formatCurrency(userData.totalCommissions)}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 md:p-4 col-span-2 md:col-span-1">
-              <div className="text-xs md:text-sm text-white/80 mb-1">Ce Mois</div>
-              <div className="text-sm md:text-xl lg:text-2xl font-bold break-words">{formatCurrency(userData.thisMonthCommissions)}</div>
+              <div className="text-sm md:text-xl lg:text-2xl font-bold break-words">{formatCurrency(data.user.totalCommissions)}</div>
             </div>
           </div>
         </div>
@@ -244,9 +386,9 @@ const ReferralSystem: React.FC = () => {
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
                 <div className="text-center">
                   <div className="text-xs md:text-sm text-gray-600 mb-2">Votre code unique</div>
-                  <div className="text-2xl md:text-3xl font-bold text-purple-600 mb-3 md:mb-4 break-all">{userData.referralCode}</div>
+                  <div className="text-2xl md:text-3xl font-bold text-purple-600 mb-3 md:mb-4 break-all">{data.user.referralCode}</div>
                   <div className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4 break-all">
-                    Lien: https://silvo-finance.com/register?ref={userData.referralCode}
+                    Lien: http://localhost:4000/register?ref={data.user.referralCode}
                   </div>
                   <button
                     onClick={copyReferralCode}
@@ -306,7 +448,7 @@ const ReferralSystem: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center space-x-3 md:space-x-4 mb-3 md:mb-0">
                     <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center">
-                      <currentLevel.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                      {React.createElement(getLevelIcon(currentLevel.level), { className: "w-6 h-6 md:w-8 md:h-8 text-white" })}
                     </div>
                     <div>
                       <h3 className="text-xl md:text-2xl font-bold">{currentLevel.level}</h3>
@@ -315,7 +457,7 @@ const ReferralSystem: React.FC = () => {
                   </div>
                   <div className="text-center md:text-right">
                     <div className="text-xs md:text-sm text-white/80">Parrainages</div>
-                    <div className="text-xl md:text-2xl font-bold">{userData.totalReferrals}</div>
+                    <div className="text-xl md:text-2xl font-bold">{data.user.totalReferrals}</div>
                   </div>
                 </div>
               </div>
@@ -326,17 +468,17 @@ const ReferralSystem: React.FC = () => {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-4">
                     <h4 className="font-semibold text-gray-900 text-sm md:text-base mb-2 md:mb-0">Progression vers {nextLevel.level}</h4>
                     <span className="text-xs md:text-sm text-gray-600">
-                      {userData.totalReferrals}/{nextLevel.minReferrals}
+                      {data.user.totalReferrals}/{nextLevel.minReferrals}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-3 md:mb-4">
                     <div 
                       className={`bg-gradient-to-r ${nextLevel.color} h-2 md:h-3 rounded-full transition-all duration-500`}
-                      style={{ width: `${Math.min((userData.totalReferrals / nextLevel.minReferrals) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((data.user.totalReferrals / nextLevel.minReferrals) * 100, 100)}%` }}
                     ></div>
                   </div>
                   <p className="text-xs md:text-sm text-gray-600 mb-2">
-                    Plus que {Math.max(nextLevel.minReferrals - userData.totalReferrals, 0)} parrainages pour débloquer :
+                    Plus que {Math.max(nextLevel.minReferrals - data.user.totalReferrals, 0)} parrainages pour débloquer :
                   </p>
                   <ul className="mt-2 space-y-1">
                     {nextLevel.benefits.map((benefit, index) => (
@@ -359,7 +501,7 @@ const ReferralSystem: React.FC = () => {
 
               {/* Version mobile - cartes */}
               <div className="block md:hidden space-y-3">
-                {referralHistory.map((referral) => (
+                {data.referralHistory.map((referral) => (
                   <div key={referral.id} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium text-gray-900">{referral.name}</div>
@@ -444,7 +586,9 @@ const ReferralSystem: React.FC = () => {
               <h3 className="text-base md:text-lg font-bold text-gray-900 mb-3 md:mb-4">Niveaux de Parrainage</h3>
               
               <div className="space-y-3 md:space-y-4">
-                {referralLevels.map((level, index) => (
+                {data.referralLevels.map((level, index) => {
+                  const IconComponent = getLevelIcon(level.level);
+                  return (
                   <div 
                     key={index}
                     className={`p-3 md:p-4 rounded-lg border-2 ${
@@ -454,9 +598,9 @@ const ReferralSystem: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center space-x-2 md:space-x-3 mb-2">
-                      <div className={`w-6 h-6 md:w-8 md:h-8 bg-gradient-to-r ${level.color} rounded-full flex items-center justify-center`}>
-                        <level.icon className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                      </div>
+                      <div className="w-6 h-6 md:w-8 md:h-8 bg-gradient-to-r ${level.color} rounded-full flex items-center justify-center">
+                        <IconComponent className="w-3 h-3 md:w-4 md:h-4 text-white" />
+                    </div>
                       <div>
                         <h4 className="font-semibold text-gray-900 text-sm md:text-base">{level.level}</h4>
                         <p className="text-xs text-gray-600">
@@ -471,12 +615,10 @@ const ReferralSystem: React.FC = () => {
                     </div>
                     <div className="text-xs md:text-sm space-y-1">
                       <div className="font-medium text-green-600">{level.commission}% de commission</div>
-                      {level.bonus > 0 && (
-                        <div className="text-blue-600">Bonus: {formatCurrency(level.bonus)}</div>
-                      )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -511,7 +653,7 @@ const ReferralSystem: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900 text-sm md:text-base">Ils investissent</h4>
-                    <p className="text-xs md:text-sm text-gray-600">Chaque investissement vous rapporte 10%</p>
+                    <p className="text-xs md:text-sm text-gray-600">Son premier investissement vous rapporte plus de 8%</p>
                   </div>
                 </div>
                 
@@ -528,32 +670,7 @@ const ReferralSystem: React.FC = () => {
             </div>
 
             {/* Exemples de gains */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 md:p-6 border border-green-200">
-              <h3 className="text-base md:text-lg font-bold text-gray-900 mb-3 md:mb-4">💰 Exemples de Gains</h3>
-              
-              <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pack Découverte (10K):</span>
-                  <span className="font-bold text-green-600">+1 000 XOF</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pack Starter (100K):</span>
-                  <span className="font-bold text-green-600">+10 000 XOF</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pack Croissance (200K):</span>
-                  <span className="font-bold text-green-600">+20 000 XOF</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pack Performance (800K):</span>
-                  <span className="font-bold text-green-600">+80 000 XOF</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-semibold">Pack Elite (2M):</span>
-                  <span className="font-bold text-green-600 text-sm md:text-lg">+200 000 XOF</span>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

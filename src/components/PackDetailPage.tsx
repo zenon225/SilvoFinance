@@ -63,35 +63,34 @@ const PackDetailPage: React.FC = (
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
   const [calculatedReturns, setCalculatedReturns] = useState({
-  dailyReturn: 0,
-  totalReturn: 0,
-  profit: 0
-});
+    dailyReturn: 0,
+    totalReturn: 0,
+    profit: 0
+  });
   const [investmentAmount, setInvestmentAmount] = useState(
       isNaN(Number(setSelectedAmount)) ? 0 : Number(setSelectedAmount)
     )
-
-    useEffect(() => {
-  const fetchBalance = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const res = await axios.get('http://localhost:3001/api/dashboard', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUserBalance(res.data.user?.balance || 0);
-      } catch (err) {
-        console.error('Error fetching balance:', err);
+  useEffect(() => {
+    const fetchBalance = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await axios.get('http://localhost:10000/api/dashboard', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUserBalance(res.data.user?.balance || 0);
+        } catch (err) {
+          console.error('Error fetching balance:', err);
+        }
       }
-    }
-  };
-  fetchBalance();
-}, []);
+    };
+    fetchBalance();
+  }, []);
 
   useEffect(() => {
     const fetchPackDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/investment-packs/${packId}`);
+        const response = await axios.get(`http://localhost:10000/api/investment-packs/${packId}`);
         const packFromApi = response.data;
 
         // Mappez les données de l'API vers la structure attendue
@@ -287,12 +286,23 @@ const PackDetailPage: React.FC = (
 
   const returns = calculateReturns(selectedAmount > 0 ? selectedAmount : packDetails.investment);
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value.replace(/\D/g, '');
-  const amount = value ? parseInt(value, 10) : 0;
-  setInvestmentAmount(amount);
-};
+    const value = e.target.value.replace(/\D/g, '');
+    const amount = value ? parseInt(value, 10) : 0;
+    setInvestmentAmount(amount);
+  };
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    return !!token; // Retourne true si le token existe
+  };
 
-const handleInvestment = async () => {
+  const handleInvestment = async () => {
+  // Vérification d'authentification
+  if (!checkAuth()) {
+    setIsAuthModalOpen(true);
+    setError("Veuillez vous connecter pour investir");
+    return;
+  }
+
   setError(null);
 
   if (investmentAmount === 0) {
@@ -320,7 +330,7 @@ const handleInvestment = async () => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `http://localhost:3001/api/investment-packs/${packId}/invest`,
+      `http://localhost:10000/api/investment-packs/${packId}/invest`,
       { amount: investmentAmount },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -658,7 +668,10 @@ const handleInvestment = async () => {
           <div className="flex justify-between">
             <span className="text-gray-600">Gains quotidiens:</span>
             <span className="font-bold text-green-600">
-              +{formatCurrency(investmentAmount * (packDetails.interest_rate / 100))}/jour
+              +{formatCurrency(
+                (investmentAmount + 
+                (investmentAmount * (packDetails.interest_rate / 100) * packDetails.period)
+              ) / packDetails.period)}/jour
             </span>
           </div>
           <div className="flex justify-between">

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import logo from '../images/logo_silvofinance.png';
 
 const Footer: React.FC = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
   const footerLinks = {
     'Entreprise': [
       { name: 'À Propos', href: '#about' },
@@ -51,7 +53,11 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-6">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
+                <img 
+                  src={logo} 
+                  alt="Silvo Finance Logo"
+                  className={`max-h-16 md:max-h-24 w-auto transition-all duration-300 ${isScrolled ? '' : 'brightness-0 invert'}`}
+                />
               </div>
               <span className="text-2xl font-bold">Silvo Finance</span>
             </Link>

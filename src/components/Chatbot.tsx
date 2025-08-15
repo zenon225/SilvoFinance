@@ -49,6 +49,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     'inscription': 'Pour vous inscrire :\n\n1️⃣ Cliquez sur "S\'inscrire" en haut\n2️⃣ Remplissez vos informations\n3️⃣ Choisissez votre pack d\'investissement\n4️⃣ Effectuez votre paiement sécurisé\n5️⃣ Suivez vos gains quotidiens !\n\nC\'est simple et rapide !',
     'parrainage': 'Notre programme de parrainage vous fait gagner 10% sur chaque investissement de vos filleuls !\n\n💰 10% de commission immédiate\n🎯 Niveaux Bronze, Argent, Or, Platine\n🎁 Bonus jusqu\'à 500K XOF\n👥 Parrainez autant que vous voulez\n\nPartagez votre code et gagnez plus !',
     'aide': 'Je peux vous aider avec :\n\n📊 Informations sur les packs\n💰 Calculs de rendements\n🔐 Questions de sécurité\n💳 Méthodes de paiement\n📞 Coordonnées de contact\n🎁 Programme de parrainage\n\nQue souhaitez-vous savoir ?'
+
   };
 
   const getQuickReplies = () => [

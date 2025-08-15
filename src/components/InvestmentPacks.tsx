@@ -35,7 +35,7 @@ const InvestmentPacks: React.FC = () => {
   useEffect(() => {
     const fetchPacks = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/investment-packs');
+        const response = await axios.get('http://localhost:10000/api/investment-packs');
         
         if (!response.data || !Array.isArray(response.data)) {
           throw new Error('Format de réponse invalide');
@@ -77,8 +77,8 @@ const InvestmentPacks: React.FC = () => {
   
 
    // Bénéfice total (intérêts seulement)
-  const profit = dailyReturn * pack.duration_days;
-  const maxProfit = maxDailyReturn * pack.duration_days;
+  const profit = totalReturn - pack.min_amount;
+  const maxProfit = maxTotalReturn - pack.max_amount;
 
   return {
     dailyReturn: dailyReturn,
@@ -272,50 +272,7 @@ const InvestmentPacks: React.FC = () => {
           </div>
 
           {/* Tableau comparatif */}
-          <div className="text-center mt-12">
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-xl max-w-6xl mx-auto border border-blue-200">
-              <div className="flex items-center justify-center mb-6">
-                <TrendingUp className="w-8 h-8 text-blue-600 mr-3" />
-                <h3 className="text-2xl font-semibold text-gray-900">Comparaison des Rendements</h3>
-              </div>
-              
-              <div className="overflow-x-auto mb-8">
-                <table className="w-full bg-white rounded-lg shadow-lg">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Pack</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Investissement</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Gain/Jour</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Total Récupéré</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Bénéfice</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {activePacks.map((pack) => {
-                      const returns = calculateProfit(pack);
-                      return (
-                        <tr key={pack.id}>
-                          <td className="px-4 py-3 font-medium text-gray-900">{pack.name}</td>
-                          <td className="px-4 py-3 text-center text-blue-600 font-semibold">
-                            {formatCurrency(pack.min_amount)} - {formatCurrency(pack.max_amount)}
-                          </td>
-                          <td className="px-4 py-3 text-center text-green-600 font-bold">
-                            {pack.interest_rate}% = {formatCurrency(returns.dailyReturn)}
-                          </td>
-                          <td className="px-4 py-3 text-center font-semibold">
-                            {formatCurrency(returns.totalReturn)} - {formatCurrency(returns.maxTotalReturn)}
-                          </td>
-                          <td className="px-4 py-3 text-center text-purple-600 font-bold">
-                            +{formatCurrency(returns.profit)} - +{formatCurrency(returns.maxProfit)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </section>
 
