@@ -35,7 +35,7 @@ const InvestmentPacks: React.FC = () => {
   useEffect(() => {
     const fetchPacks = async () => {
       try {
-        const response = await axios.get('http://localhost:10000/api/investment-packs');
+        const response = await axios.get('https://backend-silvofinance.onrender.com/api/investment-packs');
         
         if (!response.data || !Array.isArray(response.data)) {
           throw new Error('Format de réponse invalide');

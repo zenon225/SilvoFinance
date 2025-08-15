@@ -106,7 +106,7 @@ const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
   useEffect(() => {
     const fetchBalance = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:10000/api/dashboard', {
+      const res = await axios.get('https://backend-silvofinance.onrender.com/api/dashboard', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUserBalance(res.data.user?.balance || 0);
@@ -141,7 +141,7 @@ const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
       token: !!token // Log si token existe
     });
       const response = await axios.post(
-        `http://localhost:10000/api/investment-packs/${packId}/invest`,
+        `https://backend-silvofinance.onrender.com/api/investment-packs/${packId}/invest`,
         { amount: investmentAmount },
         { headers: { Authorization: `Bearer ${token}` } }
       );

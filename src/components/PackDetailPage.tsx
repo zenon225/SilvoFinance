@@ -75,7 +75,7 @@ const PackDetailPage: React.FC = (
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await axios.get('http://localhost:10000/api/dashboard', {
+          const res = await axios.get('https://backend-silvofinance.onrender.com/api/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUserBalance(res.data.user?.balance || 0);
@@ -90,7 +90,7 @@ const PackDetailPage: React.FC = (
   useEffect(() => {
     const fetchPackDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:10000/api/investment-packs/${packId}`);
+        const response = await axios.get(`https://backend-silvofinance.onrender.com/api/investment-packs/${packId}`);
         const packFromApi = response.data;
 
         // Mappez les données de l'API vers la structure attendue
@@ -330,7 +330,7 @@ const PackDetailPage: React.FC = (
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `http://localhost:10000/api/investment-packs/${packId}/invest`,
+      `https://backend-silvofinance.onrender.com/api/investment-packs/${packId}/invest`,
       { amount: investmentAmount },
       { headers: { Authorization: `Bearer ${token}` } }
     );

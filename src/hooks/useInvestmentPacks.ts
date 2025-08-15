@@ -23,7 +23,7 @@ const useInvestmentPacks = () => {
   useEffect(() => {
     const fetchPacks = async () => {
       try {
-        const response = await fetch('http://localhost:10000/api/investment-packs');
+        const response = await fetch('https://backend-silvofinance.onrender.com/api/investment-packs');
         if (!response.ok) {
           throw new Error('Erreur lors de la récupération des données');
         }

@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:10000/api/dashboard', {
+      const response = await axios.get('https://backend-silvofinance.onrender.com/api/dashboard', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -163,7 +163,7 @@ useEffect(() => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:10000/api/notifications', {
+      const response = await axios.get('https://backend-silvofinance.onrender.com/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(response.data.notifications || []);
@@ -866,7 +866,7 @@ useEffect(() => {
   onClick={async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:10000/api/earnings/claim', {
+      const response = await axios.post('https://backend-silvofinance.onrender.com/api/earnings/claim', {
         investmentId: selectedInvestment.id
       }, {
         headers: {

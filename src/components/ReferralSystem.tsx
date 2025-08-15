@@ -129,7 +129,7 @@ const ReferralSystem: React.FC = () => {
     const fetchReferralData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:10000/api/referral', {
+        const response = await axios.get('https://backend-silvofinance.onrender.com/api/referral', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
