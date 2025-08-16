@@ -445,7 +445,7 @@ const ReferralSystem: React.FC = () => {
                     {data.user.referralCode}
                   </div>
                   <div className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4 break-all">
-                    Lien: http://localhost:4000/register?ref=
+                    Lien: https://silvofinance.onrender.com/register?ref=
                     {data.user.referralCode}
                   </div>
                   <button
