@@ -127,14 +127,11 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "https://backend-silvofinance.onrender.com/api/dashboard",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get("http://localhost:3001/api/dashboard", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       // Transformez les investissements actifs
       const transformedInvestments =
@@ -227,7 +224,7 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "https://backend-silvofinance.onrender.com/api/notifications",
+          "http://localhost:3001/api/notifications",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -356,7 +353,6 @@ const Dashboard: React.FC = () => {
             <p className="text-2xl font-bold text-gray-900">
               {showBalance ? formatCurrency(userData.balance) : "••••••"}
             </p>
-            <p className="text-sm text-green-600 mt-2">+12.5% ce mois</p>
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -368,9 +364,6 @@ const Dashboard: React.FC = () => {
             </h3>
             <p className="text-2xl font-bold text-gray-900">
               {showBalance ? formatCurrency(userData.totalEarnings) : "••••••"}
-            </p>
-            <p className="text-sm text-green-600 mt-2">
-              +2 500 FCFA aujourd'hui
             </p>
           </div>
 
@@ -1084,7 +1077,7 @@ const Dashboard: React.FC = () => {
                   try {
                     const token = localStorage.getItem("token");
                     const response = await axios.post(
-                      "https://backend-silvofinance.onrender.com/api/earnings/claim",
+                      "http://localhost:3001/api/earnings/claim",
                       {
                         investmentId: selectedInvestment.id,
                       },
