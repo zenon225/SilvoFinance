@@ -317,7 +317,7 @@ const ReferralSystem: React.FC = () => {
   };
 
   const shareViaMethod = (method: string) => {
-    const referralLink = `http://localhost:4000/register?ref=${data.user.referralCode}`;
+    const referralLink = `${window.location.origin}?ref=${data.user.referralCode}`;
     const message = `🚀 Rejoins-moi sur Silvo Finance ! Rendements de 150% à 750% garantis. Utilise mon code: ${data.user.referralCode} ${referralLink}`;
 
     switch (method) {

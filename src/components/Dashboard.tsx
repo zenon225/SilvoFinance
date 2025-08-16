@@ -127,11 +127,14 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3001/api/dashboard", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        "https://backend-silvofinance.onrender.com/api/dashboard",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       // Transformez les investissements actifs
       const transformedInvestments =
@@ -224,7 +227,7 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:3001/api/notifications",
+          "https://backend-silvofinance.onrender.com/api/notifications",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -1077,7 +1080,7 @@ const Dashboard: React.FC = () => {
                   try {
                     const token = localStorage.getItem("token");
                     const response = await axios.post(
-                      "http://localhost:3001/api/earnings/claim",
+                      "https://backend-silvofinance.onrender.com/api/earnings/claim",
                       {
                         investmentId: selectedInvestment.id,
                       },
