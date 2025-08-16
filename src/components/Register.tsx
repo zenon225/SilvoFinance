@@ -156,19 +156,22 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onClose }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          full_name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          referral_code: formData.referralCode || null,
-        }),
-      });
+      const response = await fetch(
+        "https://backend-silvofinance.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            full_name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            referral_code: formData.referralCode || null,
+          }),
+        }
+      );
 
       const data = await response.json();
 
