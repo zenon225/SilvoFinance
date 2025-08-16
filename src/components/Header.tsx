@@ -14,6 +14,7 @@ import {
 import AuthModal from "./AuthModal";
 import { useChatbot } from "./ChatbotProvider";
 import logo from "../images/logo_silvofinance.png";
+import { useSearchParams } from "react-router-dom";
 
 const checkAuthStatus = () => {
   const token = localStorage.getItem("token");
@@ -28,6 +29,8 @@ const Header: React.FC = () => {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const { openChatbot } = useChatbot();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref");
 
   // Vérifier si l'utilisateur est connecté
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -50,6 +53,14 @@ const Header: React.FC = () => {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+  useEffect(() => {
+    if (referralCode) {
+      // Ouvrir automatiquement le modal d'inscription avec le code de parrainage
+      openAuthModal("register");
+      // Stocker le code pour le formulaire
+      localStorage.setItem("referralCode", referralCode);
+    }
+  }, [referralCode]);
 
   useEffect(() => {
     const handleScroll = () => {
