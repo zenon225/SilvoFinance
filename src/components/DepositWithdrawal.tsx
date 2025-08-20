@@ -16,6 +16,10 @@ import {
   Zap,
 } from "lucide-react";
 import axios from "axios";
+import OrangeMoneyLogo from "../images/OM.jpg";
+import MoovMoneyLogo from "../images/moovmoney.png";
+import MtnMoneyLogo from "../images/mtnmoney.png";
+import WaveMoneyLogo from "../images/wave.webp";
 
 const DepositWithdrawal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"deposit" | "withdrawal">(
@@ -48,7 +52,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "credit-card",
         name: "Carte Bancaire",
-        icon: CreditCard,
+        image: "../images/wave.webp",
         description: "Paiement par carte Visa/Mastercard",
         fees: "0%",
         processingTime: "Instantané",
@@ -63,7 +67,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "orange-money",
         name: "Orange Money",
-        icon: Smartphone,
+        image: OrangeMoneyLogo,
         description: "Dépôt direct via Orange Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -72,7 +76,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "mtn-money",
         name: "MTN Mobile Money",
-        icon: Smartphone,
+        image: MtnMoneyLogo,
         description: "Dépôt direct via MTN Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -81,7 +85,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "moov-money",
         name: "Moov Money",
-        icon: Smartphone,
+        image: MoovMoneyLogo,
         description: "Dépôt direct via Moov Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -90,7 +94,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "wave",
         name: "Wave",
-        icon: Smartphone,
+        image: WaveMoneyLogo,
         description: "Dépôt direct via Wave",
         fees: "0%",
         processingTime: "Instantané",
@@ -101,7 +105,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "orange-money",
         name: "Orange Money",
-        icon: Smartphone,
+        image: OrangeMoneyLogo,
         description: "Retrait instantané sur Orange Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -110,7 +114,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "mtn-money",
         name: "MTN Mobile Money",
-        icon: Smartphone,
+        image: MtnMoneyLogo,
         description: "Retrait rapide sur MTN Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -119,7 +123,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "moov-money",
         name: "Moov Money",
-        icon: Smartphone,
+        image: MoovMoneyLogo,
         description: "Retrait sécurisé sur Moov Money",
         fees: "0%",
         processingTime: "Instantané",
@@ -128,7 +132,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "wave",
         name: "Wave",
-        icon: Smartphone,
+        image: WaveMoneyLogo,
         description: "Retrait instantané sur Wave",
         fees: "0%",
         processingTime: "Instantané",
@@ -137,7 +141,7 @@ const DepositWithdrawal: React.FC = () => {
       {
         id: "bank-transfer",
         name: "Virement Bancaire",
-        icon: Building,
+        image: "../images/wave.webp",
         description: "Virement sur votre compte bancaire",
         fees: "0%",
         processingTime: "1-3 heures",
@@ -321,7 +325,11 @@ const DepositWithdrawal: React.FC = () => {
                     <div
                       className={`w-12 h-12 bg-gradient-to-r ${method.color} rounded-lg flex items-center justify-center flex-shrink-0`}
                     >
-                      <method.icon className="w-6 h-6 text-white" />
+                      <img
+                        src={method.image}
+                        alt={method.name}
+                        className="w-10 h-10 object-contain"
+                      />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 mb-2">
