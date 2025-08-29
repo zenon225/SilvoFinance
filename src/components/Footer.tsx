@@ -1,47 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { TrendingUp, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
-import logo from '../images/logo_silvofinance.png';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  TrendingUp,
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+} from "lucide-react";
+import logo from "../images/logo_silvofinance.png";
+import TermsModal from "./TermsModal";
 
 const Footer: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState<
+    "terms" | "privacy" | null
+  >(null);
+
   const footerLinks = {
-    'Entreprise': [
-      { name: 'À Propos', href: '#about' },
-      { name: 'Notre Équipe', href: '#team' }
+    Entreprise: [{ name: "À Propos", href: "#about" }],
+    Investissement: [
+      { name: "Packs d'Investissement", href: "#investment-packs" },
     ],
-    'Investissement': [
-      { name: 'Packs d\'Investissement', href: '#investment-packs' },
-      { name: 'Stratégies', href: '#strategies' },
-      { name: 'Performances', href: '#performance' },
-      { name: 'Calculateur', href: '#calculator' }
+    Support: [{ name: "Contact", href: "/contact", isRoute: true }],
+    Légal: [
+      { name: "Conditions d'Utilisation", href: "#terms", modal: "terms" },
+      {
+        name: "Politique de Confidentialité",
+        href: "#privacy",
+        modal: "privacy",
+      },
+      { name: "Mentions Légales", href: "/mentions-legales", isRoute: true },
     ],
-    'Support': [
-      { name: 'Centre d\'Aide', href: '#help' },
-      { name: 'FAQ', href: '#faq' },
-      { name: 'Contact', href: '/contact', isRoute: true }
-    ],
-    'Légal': [
-      { name: 'Conditions d\'Utilisation', href: '#terms' },
-      { name: 'Politique de Confidentialité', href: '#privacy' },
-      { name: 'Mentions Légales', href: '#legal' }
-    ]
   };
 
   const socialLinks = [
-    { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' }
+    { icon: Facebook, href: "#", label: "Facebook" },
+    { icon: Twitter, href: "#", label: "Twitter" },
+    { icon: Instagram, href: "#", label: "Instagram" },
+    { icon: Linkedin, href: "#", label: "LinkedIn" },
   ];
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
       });
+    }
+  };
+
+  const handleLegalClick = (link: any, e: React.MouseEvent) => {
+    if (link.modal) {
+      e.preventDefault();
+      setShowTermsModal(link.modal as "terms" | "privacy");
+    } else if (!link.isRoute) {
+      e.preventDefault();
+      scrollToSection(link.href);
     }
   };
 
@@ -53,17 +71,20 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-6">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-                <img 
-                  src={logo} 
+                <img
+                  src={logo}
                   alt="Silvo Finance Logo"
-                  className={`max-h-16 md:max-h-24 w-auto transition-all duration-300 ${isScrolled ? '' : 'brightness-0 invert'}`}
+                  className={`max-h-16 md:max-h-24 w-auto transition-all duration-300 ${
+                    isScrolled ? "" : "brightness-0 invert"
+                  }`}
                 />
               </div>
               <span className="text-2xl font-bold">Silvo Finance</span>
             </Link>
             <p className="text-gray-400 mb-6 leading-relaxed">
-              Plateforme d'investissement de nouvelle génération offrant des solutions 
-              financières innovantes en FCFA pour maximiser vos rendements en toute sécurité.
+              Plateforme d'investissement de nouvelle génération offrant des
+              solutions financières innovantes en FCFA pour maximiser vos
+              rendements en toute sécurité.
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
@@ -76,7 +97,9 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-blue-500" />
-                <span className="text-gray-400">Rue du Rhône 45, 1204 Genève Suisse</span>
+                <span className="text-gray-400">
+                  Rue du Rhône 45, 1204 Genève Suisse
+                </span>
               </div>
             </div>
           </div>
@@ -89,12 +112,19 @@ const Footer: React.FC = () => {
                 {links.map((link) => (
                   <li key={link.name}>
                     {link.isRoute ? (
-                      <Link 
+                      <Link
                         to={link.href}
                         className="text-gray-400 hover:text-blue-400 transition-colors duration-300"
                       >
                         {link.name}
                       </Link>
+                    ) : link.modal ? (
+                      <button
+                        onClick={(e) => handleLegalClick(link, e)}
+                        className="text-gray-400 hover:text-blue-400 transition-colors duration-300 text-left"
+                      >
+                        {link.name}
+                      </button>
                     ) : (
                       <button
                         onClick={() => scrollToSection(link.href)}
@@ -110,13 +140,11 @@ const Footer: React.FC = () => {
           ))}
         </div>
 
-        
-
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 mb-4 md:mb-0">
             © 2024 Silvo Finance. Tous droits réservés. | Régulé par la BCEAO
           </p>
-          
+
           <div className="flex space-x-6">
             {socialLinks.map((social) => (
               <a
@@ -131,6 +159,13 @@ const Footer: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showTermsModal && (
+        <TermsModal
+          type={showTermsModal}
+          onClose={() => setShowTermsModal(null)}
+        />
+      )}
     </footer>
   );
 };

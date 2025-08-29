@@ -176,11 +176,25 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onClose }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Gestion spécifique des erreurs de parrainage
+        if (data.error && data.error.includes("parrainage")) {
+          throw new Error(
+            "Code de parrainage invalide. Veuillez vérifier le code ou continuer sans parrainage."
+          );
+        }
         throw new Error(data.error || "Échec de l'inscription");
       }
 
       // ✅ Inscription réussie
-      setSuccessMessage("Votre compte a été créé avec succès !");
+      let successMsg = "Votre compte a été créé avec succès !";
+
+      // Message spécial si parrainage
+      if (formData.referralCode) {
+        successMsg =
+          "Votre compte a été créé avec succès ! 🎁 Vous bénéficiez maintenant des avantages parrainage.";
+      }
+
+      setSuccessMessage(successMsg);
       setRegistrationSuccess(true);
 
       // Réinitialiser le formulaire
@@ -263,9 +277,6 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onClose }) => {
                     <span className="font-bold">{formData.referralCode}</span>
                   </span>
                 </div>
-                <p className="text-sm text-green-600 mt-1">
-                  🎉 Vous bénéficierez d'un bonus de bienvenue !
-                </p>
               </div>
             )}
           </div>

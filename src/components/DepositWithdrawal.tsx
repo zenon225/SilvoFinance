@@ -54,51 +54,55 @@ const DepositWithdrawal: React.FC = () => {
         name: "Carte Bancaire",
         image: "../images/wave.webp",
         description: "Paiement par carte Visa/Mastercard",
-        fees: "0%",
+        fees: "1.5%", // Frais réels
         processingTime: "Instantané",
         color: "from-blue-500 to-blue-600",
         features: [
           "Visa et Mastercard acceptées",
           "Paiement sécurisé",
           "Confirmation immédiate",
-          "Sans frais supplémentaires",
         ],
+        fusionPayMethod: "card",
       },
       {
         id: "orange-money",
         name: "Orange Money",
         image: OrangeMoneyLogo,
         description: "Dépôt direct via Orange Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-orange-500 to-orange-600",
+        fusionPayMethod: "orange_money",
       },
       {
         id: "mtn-money",
         name: "MTN Mobile Money",
         image: MtnMoneyLogo,
         description: "Dépôt direct via MTN Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-yellow-500 to-yellow-600",
+        fusionPayMethod: "mtn_money",
       },
       {
         id: "moov-money",
         name: "Moov Money",
         image: MoovMoneyLogo,
         description: "Dépôt direct via Moov Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
-        color: "from-blue-500 to-blue-600",
+        color: "from-orange-500 to-orange-600",
+        fusionPayMethod: "moov_money",
       },
       {
         id: "wave",
         name: "Wave",
         image: WaveMoneyLogo,
         description: "Dépôt direct via Wave",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
-        color: "from-green-500 to-green-600",
+        color: "from-blue-500 to-blue-600",
+        fusionPayMethod: "wave",
       },
     ],
     withdrawal: [
@@ -107,45 +111,50 @@ const DepositWithdrawal: React.FC = () => {
         name: "Orange Money",
         image: OrangeMoneyLogo,
         description: "Retrait instantané sur Orange Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-orange-500 to-orange-600",
+        fusionPayMethod: "orange_money",
       },
       {
         id: "mtn-money",
         name: "MTN Mobile Money",
         image: MtnMoneyLogo,
         description: "Retrait rapide sur MTN Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-yellow-500 to-yellow-600",
+        fusionPayMethod: "mtn_money",
       },
       {
         id: "moov-money",
         name: "Moov Money",
         image: MoovMoneyLogo,
         description: "Retrait sécurisé sur Moov Money",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-blue-500 to-blue-600",
+        fusionPayMethod: "moov_money",
       },
       {
         id: "wave",
         name: "Wave",
         image: WaveMoneyLogo,
         description: "Retrait instantané sur Wave",
-        fees: "0%",
+        fees: "1%", // Frais réels
         processingTime: "Instantané",
         color: "from-green-500 to-green-600",
+        fusionPayMethod: "wave",
       },
       {
         id: "bank-transfer",
         name: "Virement Bancaire",
         image: "../images/wave.webp",
         description: "Virement sur votre compte bancaire",
-        fees: "0%",
+        fees: "1.5%", // Frais réels
         processingTime: "1-3 heures",
         color: "from-gray-500 to-gray-600",
+        fusionPayMethod: "bank_transfer",
       },
     ],
   };
@@ -172,25 +181,101 @@ const DepositWithdrawal: React.FC = () => {
 
     setIsProcessing(true);
 
-    // Simulation de traitement
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsSuccess(true);
+    try {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
 
-      // Réinitialiser après 5 secondes
-      setTimeout(() => {
-        setIsSuccess(false);
-        setAmount("");
-        setSelectedMethod("");
-        setFormData({
-          phone: "",
-          accountNumber: "",
-          accountName: "",
-          bankName: "",
-          reason: "",
-        });
-      }, 5000);
-    }, 3000);
+      if (activeTab === "deposit") {
+        // Initier un paiement via FusionPay
+        const selectedMethodData = paymentMethods[activeTab].find(
+          (method) => method.id === selectedMethod
+        );
+
+        const response = await axios.post(
+          "https://backend-silvofinance.onrender.com/api/fusionpay/initiate-payment",
+          {
+            amount: parseInt(amount),
+            currency: "XOF",
+            articles: [{ name: "Dépôt", price: parseInt(amount), quantity: 1 }],
+            customerInfo: {
+              phone: formData.phone,
+              userId: userId,
+            },
+            returnUrl: `${window.location.origin}/dashboard?payment=success`,
+            webhookUrl: `https://backend-silvofinance.onrender.com/api/fusionpay/webhook`,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Rediriger vers l'URL de paiement
+        if (response.data.success && response.data.data.url) {
+          window.location.href = response.data.data.url;
+        } else {
+          throw new Error("URL de paiement non disponible");
+        }
+      } else {
+        // Logique pour les retraits
+        const response = await axios.post(
+          "https://backend-silvofinance.onrender.com/api/fusionpay/initiate-payout",
+          {
+            amount: parseInt(amount),
+            currency: "XOF",
+            beneficiary: {
+              phone: formData.phone,
+              ...(selectedMethod === "bank-transfer" && {
+                bank_account: {
+                  account_number: formData.accountNumber,
+                  account_name: formData.accountName,
+                  bank_name: formData.bankName,
+                },
+              }),
+            },
+            metadata: {
+              userId: userId,
+              reason: formData.reason,
+            },
+            payout_method: paymentMethods[activeTab].find(
+              (method) => method.id === selectedMethod
+            )?.fusionPayMethod,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.data.success) {
+          setIsProcessing(false);
+          setIsSuccess(true);
+
+          // Réinitialiser après 5 secondes
+          setTimeout(() => {
+            setIsSuccess(false);
+            setAmount("");
+            setSelectedMethod("");
+            setFormData({
+              phone: "",
+              accountNumber: "",
+              accountName: "",
+              bankName: "",
+              reason: "",
+            });
+          }, 5000);
+        } else {
+          throw new Error(
+            response.data.message || "Échec de la demande de retrait"
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error("Erreur lors du traitement:", error);
+      setIsProcessing(false);
+      alert(
+        error.response?.data?.message ||
+          "Une erreur s'est produite lors du traitement. Veuillez réessayer."
+      );
+    }
   };
 
   const selectedMethodData = paymentMethods[activeTab].find(
@@ -203,6 +288,7 @@ const DepositWithdrawal: React.FC = () => {
     pending: 0, // Transactions en attente
     invested: 0, // Montant investi
   });
+
   useEffect(() => {
     const fetchUserBalance = async () => {
       try {
@@ -226,6 +312,39 @@ const DepositWithdrawal: React.FC = () => {
     };
 
     fetchUserBalance();
+  }, []);
+
+  // Vérifier si un paiement vient d'être effectué avec succès
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+
+    if (paymentStatus === "success") {
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        // Recharger les données utilisateur
+        const fetchUserBalance = async () => {
+          try {
+            const token = localStorage.getItem("token");
+            const response = await axios.get(
+              "https://backend-silvofinance.onrender.com/api/dashboard",
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            setUserBalance({
+              available: response.data.user?.balance || 0,
+              pending: 0,
+              invested: response.data.totalInvested || 0,
+            });
+          } catch (error) {
+            console.error("Erreur lors du chargement du solde:", error);
+          }
+        };
+        fetchUserBalance();
+      }, 5000);
+    }
   }, []);
 
   return (
