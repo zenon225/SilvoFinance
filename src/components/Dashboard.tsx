@@ -28,6 +28,8 @@ import {
   ShoppingCart,
   Bitcoin,
   Package,
+  Check,
+  Trash2,
 } from "lucide-react";
 import axios from "axios";
 import MiniStarter from "../images/MiniStarter.jpg";
@@ -123,6 +125,99 @@ const Dashboard: React.FC = () => {
   const [selectedInvestment, setSelectedInvestment] =
     useState<Investment | null>(null);
   const [showInvestmentDetails, setShowInvestmentDetails] = useState(false);
+
+  // Fonction pour marquer une notification comme lue
+  const markAsRead = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `https://backend-silvofinance.onrender.com/api/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Mettre à jour l'état local
+      setNotifications(
+        notifications.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error("Erreur lors du marquage comme lu:", error);
+    }
+  };
+  // Fonction pour marquer toutes les notifications comme lues
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        "https://backend-silvofinance.onrender.com/api/notifications/mark-all-read",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Mettre à jour l'état local
+      setNotifications(
+        notifications.map((notif) => ({ ...notif, read: true }))
+      );
+    } catch (error) {
+      console.error(
+        "Erreur lors du marquage de toutes les notifications:",
+        error
+      );
+    }
+  };
+  // Fonction pour supprimer une notification
+  const deleteNotification = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `https://backend-silvofinance.onrender.com/api/notifications/${notificationId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Mettre à jour l'état local
+      setNotifications(
+        notifications.filter((notif) => notif.id !== notificationId)
+      );
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+    }
+  };
+  // Fonction pour supprimer toutes les notifications
+  const deleteAllNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        "https://backend-silvofinance.onrender.com/api/notifications",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Mettre à jour l'état local
+      setNotifications([]);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la suppression de toutes les notifications:",
+        error
+      );
+    }
+  };
+  // Fonction pour marquer comme lu quand on ouvre les notifications
+  const handleOpenNotifications = () => {
+    setShowNotifications(true);
+    // Marquer toutes comme lues quand on ouvre
+    if (unreadCount > 0) {
+      markAllAsRead();
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -254,16 +349,36 @@ const Dashboard: React.FC = () => {
 
   // Notifications
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (notification: any) => {
+    // Vérifiez d'abord si notification et notification.message existent
+    if (!notification || !notification.message) {
+      return <Info className="w-5 h-5 text-blue-500" />;
+    }
+
+    // Déterminez le type basé sur le contenu du message
+    const message = notification.message.toLowerCase();
+    let type = "info";
+
+    if (message.includes("gain") || message.includes("profit")) {
+      type = "success";
+    } else if (
+      message.includes("avertissement") ||
+      message.includes("attention")
+    ) {
+      type = "warning";
+    } else if (message.includes("erreur") || message.includes("échec")) {
+      type = "error";
+    }
+
     switch (type) {
       case "success":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case "warning":
         return <AlertCircle className="w-5 h-5 text-yellow-500" />;
-      case "info":
-        return <Info className="w-5 h-5 text-blue-500" />;
+      case "error":
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
-        return <Bell className="w-5 h-5 text-gray-500" />;
+        return <Info className="w-5 h-5 text-blue-500" />;
     }
   };
 
@@ -289,7 +404,7 @@ const Dashboard: React.FC = () => {
               {/* Bouton Notifications */}
               <div className="relative">
                 <button
-                  onClick={() => setShowNotifications(true)}
+                  onClick={handleOpenNotifications}
                   className="relative p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-300"
                 >
                   <Bell className="w-6 h-6 text-white" />
@@ -678,7 +793,7 @@ const Dashboard: React.FC = () => {
                                 <Clock className="w-3 h-3 mr-1" />
                                 {notification.time}
                               </span>
-                              {!notification.isRead && (
+                              {!notification.read && (
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               )}
                             </div>
@@ -693,6 +808,26 @@ const Dashboard: React.FC = () => {
                             {notification.message}
                           </p>
                         </div>
+                      </div>
+
+                      {/* Boutons d'action pour chaque notification */}
+                      <div className="flex justify-end space-x-2 mt-3">
+                        {!notification.read && (
+                          <button
+                            onClick={() => markAsRead(notification.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Marquer comme lu
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteNotification(notification.id)}
+                          className="text-xs text-red-600 hover:text-red-800 font-medium flex items-center"
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Supprimer
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -712,10 +847,18 @@ const Dashboard: React.FC = () => {
             {notifications.length > 0 && (
               <div className="bg-gray-50 p-4 border-t">
                 <div className="flex items-center justify-between">
-                  <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
+                  >
+                    <Check className="w-4 h-4 mr-1" />
                     Marquer tout comme lu
                   </button>
-                  <button className="text-sm text-gray-600 hover:text-gray-700">
+                  <button
+                    onClick={deleteAllNotifications}
+                    className="text-sm text-red-600 hover:text-red-700 flex items-center"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
                     Effacer tout
                   </button>
                 </div>
